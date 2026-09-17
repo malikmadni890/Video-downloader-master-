@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a0033">
+<title>Downloader Master - Premium 3D Video Downloader</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;font-family:Segoe UI,Tahoma,sans-serif;background:linear-gradient(135deg,#1a0033,#330066 25%,#003366 55%,#004d99 78%,#ff1a1a);display:flex;justify-content:center;align-items:center;padding:18px;overflow:auto}body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 40%,rgba(255,100,100,.13),transparent 45%),radial-gradient(circle at 80% 70%,rgba(0,120,255,.14),transparent 45%);pointer-events:none}.container{width:100%;max-width:560px;background:rgba(255,255,255,.96);border-radius:30px;padding:42px 28px;box-shadow:0 20px 70px rgba(0,0,0,.35);text-align:center;position:relative;z-index:1;border:1px solid rgba(255,255,255,.5)}.badge{display:inline-block;background:linear-gradient(135deg,#ff1a1a,#0066cc);color:#fff;padding:8px 16px;border-radius:25px;font-size:12px;font-weight:800;letter-spacing:1px}.logo{font-size:82px;margin:18px 0 10px;filter:drop-shadow(0 8px 16px #999)}h1{font-size:31px;background:linear-gradient(135deg,#ff1a1a,#0066cc);-webkit-background-clip:text;color:transparent;font-weight:850}.sub{color:#999;margin:7px 0 28px}.input{width:100%;padding:16px;border:2px solid rgba(255,26,26,.3);border-radius:16px;font-size:15px;color:#333;outline:0;margin-bottom:18px}.input:focus{border-color:#ff1a1a;box-shadow:0 0 0 4px rgba(255,26,26,.1)}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.mode{padding:14px 8px;border:2px solid #ddd;border-radius:14px;background:#fff;color:#333;font-weight:700;cursor:pointer}.mode.active{background:linear-gradient(135deg,#ff1a1a,#0066cc);color:#fff;border-color:#ff1a1a;box-shadow:0 8px 22px rgba(255,26,26,.28)}.main{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#ff1a1a,#0066cc);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.2)}.main:disabled{opacity:.6;cursor:not-allowed}.status{display:none;margin-top:18px;padding:15px;border-radius:14px;font-size:13px;font-weight:600}.status.show{display:block}.loading{background:#fff0f0;color:#c62828}.success{background:#edf8ef;color:#2e7d32}.error{background:#fff0f0;color:#c62828}.preview{display:none;margin-top:18px;border-radius:16px;overflow:hidden;background:#111}.preview.show{display:block}.preview img{width:100%;max-height:280px;object-fit:cover;display:block}.options{display:none;margin-top:18px;text-align:left;padding:16px;border-radius:18px;background:linear-gradient(135deg,rgba(0,102,204,.06),rgba(255,26,26,.04));border:1px solid rgba(0,102,204,.2)}.options.show{display:block}.options h3{color:#333;margin-bottom:11px;font-size:17px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opt{padding:13px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#333;font-weight:750;cursor:pointer}.opt:hover{border-color:#0066cc;transform:translateY(-2px)}.opt:disabled{opacity:.55}.done{display:none;margin-top:18px;padding:17px;border:2px solid #2e7d32;border-radius:15px;background:#edf8ef}.done.show{display:block}.done b{color:#2e7d32;font-size:20px}.done p{color:#666;font-size:13px;margin-top:5px}.footer{margin-top:25px;padding-top:18px;border-top:1px solid #ddd;color:#999;font-size:11px;line-height:1.5}.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes s{to{transform:rotate(360deg)}}@media(max-width:600px){.container{padding:38px 20px}.modes{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}h1{font-size:27px}.logo{font-size:70px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="badge">⭐ PREMIUM 3D</div>
+<div class="logo">🎬</div>
+<h1>Downloader Master</h1>
+<p class="sub">Premium 3D Experience</p>
+<input id="videoUrl" class="input" type="text" placeholder="Paste video link here..." autocomplete="off">
+<div class="modes">
+<button class="mode active" onclick="setMode('auto',this)">✨ Auto</button>
+<button class="mode" onclick="setMode('audio',this)">🎵 Audio</button>
+<button class="mode" onclick="setMode('mute',this)">🔇 Mute</button>
+</div>
+<button id="mainBtn" class="main" onclick="downloadVideo()">📋 Paste & Download</button>
+<div id="status" class="status"></div>
+<div id="preview" class="preview"><img id="thumb" alt="Media preview"></div>
+<div id="options" class="options"><h3>⬇️ Download More Options</h3><div id="grid" class="grid"></div></div>
+<div id="done" class="done"><b>✅ Done!</b><p>Download request completed.</p></div>
+<div class="footer">Only download content you own or have permission to use.</div>
+</div>
+<script>
+const GATEWAY_API='https://vidluxe-gateway-production.up.railway.app';
+const INFO_TIMEOUT=120000;
+const DOWNLOAD_TIMEOUT=180000;
+let selectedMode='auto';
+
+function setMode(mode,btn){
+ selectedMode=mode;
+ document.querySelectorAll('.mode').forEach(x=>x.classList.remove('active'));
+ btn.classList.add('active');
+}
+
+function showStatus(msg,type){
+ const x=document.getElementById('status');
+ x.textContent=msg;
+ x.className='status show '+type;
+}
+
+function reset(){
+ document.getElementById('options').classList.remove('show');
+ document.getElementById('grid').innerHTML='';
+ document.getElementById('preview').classList.remove('show');
+ document.getElementById('thumb').removeAttribute('src');
+ document.getElementById('done').classList.remove('show');
+}
+
+async function request(url,opts,timeout){
+ const c=new AbortController();
+ const t=setTimeout(()=>c.abort(),timeout);
+ try{
+  return await fetch(url,{...opts,signal:c.signal});
+ }catch(e){
+  if(e.name==='AbortError')throw new Error('Request timed out. Please try again.');
+  throw e;
+ }finally{
+  clearTimeout(t);
+ }
+}
+
+async function getInfo(url){
+ const r=await request(GATEWAY_API+'/api/info',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({url})
+ },INFO_TIMEOUT);
+ 
+ const text=await r.text();
+ console.log('Info Response Text:',text.substring(0,200));
+ 
+ if(text.startsWith('<')){
+  throw new Error('Gateway error - returned HTML instead of JSON. Gateway may be down.');
+ }
+ 
+ let data=JSON.parse(text);
+ 
+ if(!data.ok){
+  throw new Error(data?.error?.message||data?.error||'API returned error');
+ }
+ 
+ return data.data||data;
+}
+
+async function downloadFormat(url,format,b){
+ const old=b.textContent;
+ b.disabled=true;
+ b.innerHTML='<span class="spin"></span>Preparing...';
+ showStatus('⏳ Preparing download...','loading');
+ try{
+  const r=await request(GATEWAY_API+'/api/download',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({url,format})
+  },DOWNLOAD_TIMEOUT);
+  
+  const text=await r.text();
+  
+  if(text.startsWith('<')){
+   throw new Error('Gateway error - Service temporarily unavailable');
+  }
+  
+  let d=JSON.parse(text);
+  
+  if(!d.ok||!d.url){
+   throw new Error(d?.error?.message||d?.error||'No download URL');
+  }
+  
+  showStatus('✅ Download started!','success');
+  window.location.href=d.url;
+  setTimeout(()=>document.getElementById('done').classList.add('show'),1200);
+ }catch(e){
+  showStatus('❌ '+e.message,'error');
+ }finally{
+  setTimeout(()=>{
+   b.disabled=false;
+   b.textContent=old;
+  },1500);
+ }
+}
+
+async function downloadVideo(){
+ let url=document.getElementById('videoUrl').value.trim();
+ if(!url){
+  try{
+   url=(await navigator.clipboard.readText()).trim();
+   if(url)document.getElementById('videoUrl').value=url;
+  }catch(e){}
+ }
+ if(!url){
+  showStatus('❌ Please paste a URL first','error');
+  return;
+ }
+ 
+ reset();
+ const btn=document.getElementById('mainBtn');
+ btn.disabled=true;
+ btn.innerHTML='<span class="spin"></span>Processing...';
+ 
+ const isYouTube=url.includes('youtube.com')||url.includes('youtu.be');
+ showStatus(isYouTube?'⏳ Processing YouTube (2 minutes)...':'⏳ Connecting...','loading');
+ 
+ try{
+  const data=await getInfo(url);
+  
+  if(data.thumbnailUrl){
+   document.getElementById('thumb').src=data.thumbnailUrl;
+   document.getElementById('preview').classList.add('show');
+  }
+  
+  let formats=Array.isArray(data.formats)?data.formats:[];
+  
+  if(!formats.length){
+   throw new Error('No formats available');
+  }
+  
+  let selectedFormats=formats;
+  
+  if(selectedMode==='audio'){
+   const audio=formats.filter(f=>{
+    const vCodec=String(f.vCodec||'').toLowerCase();
+    return vCodec==='none'||!f.vCodec;
+   });
+   selectedFormats=audio.length>0?audio:formats;
+  }
+  else if(selectedMode==='mute'){
+   const video=formats.filter(f=>{
+    const aCodec=String(f.aCodec||'').toLowerCase();
+    return aCodec==='none'||!f.aCodec;
+   });
+   selectedFormats=video.length>0?video:formats;
+  }
+  
+  const first=selectedFormats[0];
+  
+  showStatus('⏳ Preparing download...','loading');
+  await downloadFormat(url,String(first.id||''),btn);
+  
+ }catch(e){
+  console.error(e);
+  showStatus('❌ '+e.message,'error');
+ }finally{
+  btn.disabled=false;
+  btn.textContent='📋 Paste & Download';
+ }
+}
+
+document.getElementById('videoUrl').addEventListener('keydown',e=>{
+ if(e.key==='Enter')downloadVideo();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a0033">
+<title>Downloader Master - Premium 3D Video Downloader</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;font-family:Segoe UI,Tahoma,sans-serif;background:linear-gradient(135deg,#1a0033,#330066 25%,#003366 55%,#004d99 78%,#ff1a1a);display:flex;justify-content:center;align-items:center;padding:18px;overflow:auto}body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 40%,rgba(255,100,100,.13),transparent 45%),radial-gradient(circle at 80% 70%,rgba(0,120,255,.14),transparent 45%);pointer-events:none}.container{width:100%;max-width:560px;background:rgba(255,255,255,.96);border-radius:30px;padding:42px 28px;box-shadow:0 20px 70px rgba(0,0,0,.35);text-align:center;position:relative;z-index:1;border:1px solid rgba(255,255,255,.5)}.badge{display:inline-block;background:linear-gradient(135deg,#ff1a1a,#0066cc);color:#fff;padding:8px 16px;border-radius:25px;font-size:12px;font-weight:800;letter-spacing:1px}.logo{font-size:82px;margin:18px 0 10px;filter:drop-shadow(0 8px 16px #999)}h1{font-size:31px;background:linear-gradient(135deg,#ff1a1a,#0066cc);-webkit-background-clip:text;color:transparent;font-weight:850}.sub{color:#999;margin:7px 0 28px}.input{width:100%;padding:16px;border:2px solid rgba(255,26,26,.3);border-radius:16px;font-size:15px;color:#333;outline:0;margin-bottom:18px}.input:focus{border-color:#ff1a1a;box-shadow:0 0 0 4px rgba(255,26,26,.1)}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.mode{padding:14px 8px;border:2px solid #ddd;border-radius:14px;background:#fff;color:#333;font-weight:700;cursor:pointer}.mode.active{background:linear-gradient(135deg,#ff1a1a,#0066cc);color:#fff;border-color:#ff1a1a;box-shadow:0 8px 22px rgba(255,26,26,.28)}.main{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#ff1a1a,#0066cc);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.2)}.main:disabled{opacity:.6;cursor:not-allowed}.status{display:none;margin-top:18px;padding:15px;border-radius:14px;font-size:13px;font-weight:600}.status.show{display:block}.loading{background:#fff0f0;color:#c62828}.success{background:#edf8ef;color:#2e7d32}.error{background:#fff0f0;color:#c62828}.footer{margin-top:25px;padding-top:18px;border-top:1px solid #ddd;color:#999;font-size:11px;line-height:1.5}.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes s{to{transform:rotate(360deg)}}@media(max-width:600px){.container{padding:38px 20px}.modes{grid-template-columns:1fr 1fr}h1{font-size:27px}.logo{font-size:70px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="badge">⭐ PREMIUM 3D</div>
+<div class="logo">🎬</div>
+<h1>Downloader Master</h1>
+<p class="sub">Premium 3D Experience</p>
+<input id="videoUrl" class="input" type="text" placeholder="Paste video link here..." autocomplete="off">
+<div class="modes">
+<button class="mode active" onclick="setMode('auto',this)">✨ Auto</button>
+<button class="mode" onclick="setMode('audio',this)">🎵 Audio</button>
+<button class="mode" onclick="setMode('mute',this)">🔇 Mute</button>
+</div>
+<button id="mainBtn" class="main" onclick="downloadVideo()">📋 Paste & Download</button>
+<div id="status" class="status"></div>
+<div class="footer">Only download content you own or have permission to use.</div>
+</div>
+<script>
+// ⚠️ IMPORTANT: Replace with your Railway backend URL
+const YOUTUBE_BACKEND='https://your-railway-app.up.railway.app';
+const COBALT_API='https://api.cobalt.tools';
+
+let selectedMode='auto';
+
+function setMode(mode,btn){
+ selectedMode=mode;
+ document.querySelectorAll('.mode').forEach(x=>x.classList.remove('active'));
+ btn.classList.add('active');
+}
+
+function showStatus(msg,type){
+ const x=document.getElementById('status');
+ x.textContent=msg;
+ x.className='status show '+type;
+}
+
+async function downloadVideo(){
+ let url=document.getElementById('videoUrl').value.trim();
+ if(!url){
+  try{
+   url=(await navigator.clipboard.readText()).trim();
+   if(url)document.getElementById('videoUrl').value=url;
+  }catch(e){}
+ }
+ if(!url){
+  showStatus('❌ Please paste a URL first','error');
+  return;
+ }
+ 
+ const btn=document.getElementById('mainBtn');
+ btn.disabled=true;
+ btn.innerHTML='<span class="spin"></span>Processing...';
+ 
+ const isYouTube=url.includes('youtube.com')||url.includes('youtu.be');
+ 
+ try{
+  if(isYouTube){
+   // Use yt-dlp backend for YouTube (SUPER FAST ⚡⚡⚡)
+   showStatus('⏳ YouTube: Processing with yt-dlp...','loading');
+   
+   const res=await fetch(YOUTUBE_BACKEND+'/api/download',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({url})
+   });
+   
+   const data=await res.json();
+   
+   if(!res.ok||!data.url){
+    throw Error(data.error||'YouTube download failed');
+   }
+   
+   showStatus('✅ YouTube download started!','success');
+   window.location.href=data.url;
+   setTimeout(()=>showStatus('✅ Done!','success'),2000);
+  }else{
+   // Use Cobalt for other platforms
+   await downloadViaCobalt(url);
+  }
+ }catch(e){
+  console.error(e);
+  showStatus('❌ '+e.message,'error');
+ }finally{
+  btn.disabled=false;
+  btn.textContent='📋 Paste & Download';
+ }
+}
+
+async function downloadViaCobalt(url){
+ showStatus('⏳ Processing with Cobalt...','loading');
+ 
+ try{
+  const payload={url:url};
+  
+  if(selectedMode==='audio'){
+   payload.vCodec='none';
+   payload.aFormat='best';
+  }else if(selectedMode==='mute'){
+   payload.vCodec='h264';
+   payload.aCodec='none';
+  }else{
+   payload.vCodec='h264';
+   payload.aFormat='best';
+  }
+  
+  const res=await fetch(COBALT_API+'/api/json',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify(payload)
+  });
+  
+  const data=await res.json();
+  
+  if(!res.ok||!data.url){
+   throw Error(data.error||'Download failed');
+  }
+  
+  showStatus('✅ Download started!','success');
+  window.location.href=data.url;
+  setTimeout(()=>showStatus('✅ Done!','success'),2000);
+ }catch(e){
+  throw e;
+ }
+}
+
+document.getElementById('videoUrl').addEventListener('keydown',e=>{
+ if(e.key==='Enter')downloadVideo();
+});
+</script>
+</body>
+</html>
