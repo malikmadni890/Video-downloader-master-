@@ -1,17 +1,14 @@
-FROM node:18-alpine
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg nodejs npm && \
+    pip install --no-cache-dir -U "yt-dlp[default]" yt-dlp-ejs && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-RUN apk add --no-cache python3 py3-pip ffmpeg
-
-RUN pip3 install yt-dlp
-
-COPY package.json .
-
-RUN npm install
-
+COPY package*.json ./
+RUN npm install --omit=dev
 COPY . .
 
+ENV PORT=3000
 EXPOSE 3000
-
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
